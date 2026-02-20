@@ -1,0 +1,6 @@
+---
+- name: Shell Environment Setup
+  hosts: prod
+  become: true
+  roles:
+    - shell
