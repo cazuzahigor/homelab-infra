@@ -1,0 +1,10 @@
+*.key
+*.pem
+*.retry
+*.vault_pass
+.vault_pass
+.DS_Store
+*.log
+__pycache__/
+*.pyc
+.ansible/
