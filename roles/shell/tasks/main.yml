@@ -1,0 +1,63 @@
+---
+- name: Install base shell packages
+  ansible.builtin.apt:
+    name:
+      - zsh
+      - curl
+      - git
+      - btop
+      - unzip
+      - fontconfig
+    state: present
+    update_cache: true
+
+- name: Set zsh as default shell for user
+  ansible.builtin.user:
+    name: "{{ ansible_user }}"
+    shell: /usr/bin/zsh
+
+- name: Check if starship is already installed
+  ansible.builtin.stat:
+    path: /usr/local/bin/starship
+  register: starship_bin
+
+- name: Install starship
+  ansible.builtin.shell:
+    cmd: curl -sS https://starship.rs/install.sh | sh -s -- --yes
+  when: not starship_bin.stat.exists
+
+- name: Create user fonts directory
+  ansible.builtin.file:
+    path: "/home/{{ ansible_user }}/.local/share/fonts"
+    state: directory
+    owner: "{{ ansible_user }}"
+    mode: '0755'
+
+- name: Check if JetBrainsMono Nerd Font is already installed
+  ansible.builtin.stat:
+    path: "/home/{{ ansible_user }}/.local/share/fonts/JetBrainsMonoNerdFont-Regular.ttf"
+  register: font_installed
+
+- name: Download JetBrainsMono Nerd Font
+  ansible.builtin.get_url:
+    url: https://github.com/ryanoasis/nerd-fonts/releases/download/v3.3.0/JetBrainsMono.zip
+    dest: /tmp/JetBrainsMono.zip
+  when: not font_installed.stat.exists
+
+- name: Install JetBrainsMono Nerd Font
+  ansible.builtin.unarchive:
+    src: /tmp/JetBrainsMono.zip
+    dest: "/home/{{ ansible_user }}/.local/share/fonts/"
+    remote_src: true
+    owner: "{{ ansible_user }}"
+  when: not font_installed.stat.exists
+
+- name: Rebuild font cache
+  ansible.builtin.command: fc-cache -fv
+  when: not font_installed.stat.exists
+
+- name: Remove font zip file
+  ansible.builtin.file:
+    path: /tmp/JetBrainsMono.zip
+    state: absent
+  when: not font_installed.stat.exists
