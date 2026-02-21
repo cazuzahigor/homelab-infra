@@ -1,3 +1,4 @@
 ---
 - import_playbook: configure_base.yml
 - import_playbook: configure_shell.yml
+- import_playbook: configure_security.yml

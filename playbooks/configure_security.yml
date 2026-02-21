@@ -1,0 +1,6 @@
+---
+- name: Security Hardening
+  hosts: prod
+  become: true
+  roles:
+    - security
