@@ -39,10 +39,18 @@ homelab-infra/
 ├── playbooks/
 │   ├── site.yml                 # Master playbook — provisions everything
 │   ├── configure_base.yml       # Hostname, /etc/hosts
-│   └── configure_shell.yml      # Zsh, Starship, Nerd Fonts
+│   ├── configure_shell.yml      # Zsh, Starship, Nerd Fonts
+│   └── configure_security.yml   # SSH hardening, fail2ban
 └── roles/
-    └── shell/                   # Shell environment role
-        └── tasks/
+    ├── shell/                   # Shell environment role
+    │   └── tasks/
+    │       └── main.yml
+    └── security/                # Security hardening role
+        ├── tasks/
+        │   └── main.yml
+        ├── templates/
+        │   └── sshd_config.j2
+        └── handlers/
             └── main.yml
 ```
 
@@ -71,6 +79,15 @@ ansible-playbook playbooks/site.yml
 - Downloads and installs **JetBrainsMono Nerd Font v3.3.0**
 - Rebuilds the font cache with `fc-cache`
 
+### `configure_security.yml` — Security Hardening
+
+- Ensures SSH public key is present in `authorized_keys` before any lockdown
+- Disables password authentication — key-based auth only
+- Disables root login
+- Deploys hardened `sshd_config` with pre-apply syntax validation via `sshd -t`
+- Installs and configures **fail2ban** with a custom SSH jail: 3 retries, 1h ban
+- Service restarts only triggered when configuration actually changes (handlers)
+
 All tasks are **idempotent** — safe to run multiple times with no side effects.
 
 ---
@@ -93,10 +110,13 @@ ansible-playbook playbooks/site.yml --check
 ansible-playbook playbooks/site.yml
 
 # Single playbook
-ansible-playbook playbooks/configure_shell.yml
+ansible-playbook playbooks/configure_security.yml
 
 # Ad-hoc connectivity test
 ansible all -m ping
+
+# First-time provisioning on a new server (password auth still active)
+ansible-playbook playbooks/site.yml --ask-pass
 ```
 
 ---
@@ -112,6 +132,12 @@ Zero-config WireGuard mesh with device authentication. No open ports, no bastion
 **Why Starship + JetBrainsMono Nerd Font in a server playbook?**
 The server is accessed daily via terminal. A well-configured shell reduces friction, displays meaningful context (git branch, Java version, command duration), and signals that the environment was set up with intention — not improvisation.
 
+**Why validate `sshd_config` before deploying?**
+The `validate` parameter on the template task runs `sshd -t -f %s` against a temporary copy before writing to `/etc/ssh/sshd_config`. If the configuration is invalid, the file is never replaced — preventing accidental lockout from the server.
+
+**Why copy the SSH key before hardening?**
+The `authorized_key` task runs first to guarantee key-based access is established before `PasswordAuthentication no` takes effect. This makes the role safe to run on brand-new servers without manual preparation.
+
 ---
 
 ## Idempotency
@@ -122,6 +148,7 @@ Every task is designed to be run repeatedly without unintended side effects:
 - Starship is only installed if `/usr/local/bin/starship` doesn't exist
 - Fonts are only downloaded and extracted if `JetBrainsMonoNerdFont-Regular.ttf` is absent
 - Hostname and `/etc/hosts` tasks use `lineinfile` with `regexp` to avoid duplicates
+- SSH and fail2ban services are restarted only via handlers — only when their configs change
 
 ---
 
@@ -129,7 +156,6 @@ Every task is designed to be run repeatedly without unintended side effects:
 
 - [ ] `configure_docker.yml` — Docker Engine setup
 - [ ] `configure_java.yml` — OpenJDK installation and `JAVA_HOME` setup
-- [ ] `configure_security.yml` — SSH hardening, UFW firewall rules
 - [ ] `configure_monitoring.yml` — Node Exporter + Prometheus + Grafana stack
 - [ ] Ansible Vault for secrets management
 
