@@ -1,0 +1,8 @@
+---
+- name: Network Configuration
+  hosts: prod
+  become: true
+  vars_files:
+    - "../group_vars/all/vault.yml"
+  roles:
+    - network

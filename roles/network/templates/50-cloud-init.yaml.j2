@@ -1,0 +1,20 @@
+# Managed by Ansible - do not edit manually
+network:
+  version: 2
+  wifis:
+    {{ network_interface }}:
+      dhcp4: false
+      addresses:
+        - 192.168.0.9/24
+      routes:
+        - to: default
+          via: 192.168.0.1
+      nameservers:
+        addresses:
+          - 1.1.1.1
+          - 8.8.8.8
+      access-points:
+        "{{ vault_wifi_ssid }}":
+          auth:
+            key-management: "psk"
+            password: "{{ vault_wifi_password }}"

@@ -1,0 +1,9 @@
+#!/bin/bash
+# Managed by Ansible
+# Tailscale network optimizations applied on interface up
+
+# UDP GRO Forwarding for WireGuard throughput
+ethtool -K {{ network_interface }} rx-udp-gro-forwarding on
+
+# Disable wifi power save to reduce latency spikes
+iw dev {{ network_interface }} set power_save off

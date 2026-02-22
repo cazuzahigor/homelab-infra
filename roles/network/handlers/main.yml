@@ -1,0 +1,15 @@
+---
+- name: Apply sysctl
+  ansible.builtin.command:
+    cmd: sysctl -p /etc/sysctl.d/99-tailscale.conf
+  changed_when: false
+
+- name: Restart networkd
+  ansible.builtin.service:
+    name: systemd-networkd
+    state: restarted
+
+- name: Apply netplan
+  ansible.builtin.command:
+    cmd: netplan apply
+  changed_when: false
