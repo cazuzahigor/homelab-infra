@@ -8,3 +8,5 @@
 __pycache__/
 *.pyc
 .ansible/
+~/.ansible-vault-pass
+.ansible-vault-pass

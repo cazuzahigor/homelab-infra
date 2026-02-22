@@ -1,2 +1,5 @@
 ansible_user: cazuza
 ansible_python_interpreter: /usr/bin/python3.12
+network_interface: wlp2s0
+wifi_ssid: "{{ vault_wifi_ssid }}"
+wifi_password: "{{ vault_wifi_password }}"
